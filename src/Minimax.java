@@ -10,20 +10,29 @@ import java.util.List;
  *
  * El jugador contrario representa MIN.
  *
- * La profundidad utilizada es de 2 niveles:
- *
- * Nivel 1 -> MAX
- * Nivel 2 -> MIN
- *
- * Después de esos dos niveles usamos
- * la función heurística para valorar el estado.
+ * La profundidad se puede cambiar fácilmente
+ * modificando la constante PROFUNDIDAD.
  */
 public class Minimax {
 
     /*
-     * Profundidad máxima solicitada en el taller.
+     * =========================================================
+     * PROFUNDIDAD DE LA BÚSQUEDA
+     * =========================================================
+     *
+     * Este es el número que puedes cambiar mañana.
+     *
+     * Ejemplos:
+     *
+     * 2 = MAX -> MIN
+     * 3 = MAX -> MIN -> MAX
+     * 4 = MAX -> MIN -> MAX -> MIN
+     * 5 = MAX -> MIN -> MAX -> MIN -> MAX
+     *
+     * Si el profesor dice "profundidad 4",
+     * simplemente cambias el 2 por 4.
      */
-    private static final int PROFUNDIDAD = 2;
+    private static final int PROFUNDIDAD = 6; //C. PROF.
 
     /*
      * Símbolo de la inteligencia artificial.
@@ -40,6 +49,7 @@ public class Minimax {
      */
     private final Heuristica heuristica;
 
+
     /**
      * Constructor de la inteligencia artificial.
      *
@@ -53,7 +63,8 @@ public class Minimax {
         this.jugadorIA = jugadorIA;
 
         /*
-         * Calculamos automáticamente el símbolo contrario.
+         * Calculamos automáticamente
+         * el símbolo contrario.
          */
         if (jugadorIA == 'X') {
 
@@ -68,28 +79,35 @@ public class Minimax {
          * Creamos la función heurística utilizando
          * el símbolo de nuestra IA.
          */
-        heuristica =
-                new Heuristica(jugadorIA);
+        heuristica = new Heuristica(jugadorIA);
     }
+
 
     /**
      * Busca el mejor movimiento para la IA.
      *
-     * Este es el punto donde comienza MIN-MAX.
+     * Aquí comienza el algoritmo MIN-MAX.
+     *
+     * MAX representa a la IA.
      */
     public Movimiento obtenerMejorMovimiento(
             EstadoJuego estado) {
 
         /*
-         * Obtenemos todas las jugadas que puede realizar
-         * la IA en el estado actual.
+         * Obtenemos TODOS los movimientos posibles
+         * de la IA.
+         *
+         * Esto incluye:
+         *
+         * - Colocar una ficha.
+         * - Mover una ficha existente.
          */
         List<Movimiento> movimientos =
                 estado.generarMovimientos();
 
         /*
-         * Si no hay movimientos posibles,
-         * devolvemos null.
+         * Si no existen movimientos,
+         * no podemos realizar ninguna jugada.
          */
         if (movimientos.isEmpty()) {
 
@@ -97,63 +115,51 @@ public class Minimax {
         }
 
         /*
-         * Aquí guardaremos el movimiento que finalmente
-         * consideremos mejor.
+         * Aquí guardaremos la mejor jugada encontrada.
          */
         Movimiento mejorMovimiento = null;
 
         /*
-         * Inicialmente tenemos el valor más pequeño posible.
+         * MAX quiere obtener el valor más grande.
          *
-         * Como MAX quiere obtener valores grandes,
-         * cualquier primera jugada será mejor que esto.
+         * Por eso comenzamos con el valor mínimo posible.
          */
-        int mejorValor =
-                Integer.MIN_VALUE;
+        int mejorValor = Integer.MIN_VALUE;
 
         /*
-         * Probamos uno por uno todos los movimientos
-         * que puede realizar la IA.
+         * Probamos todas las jugadas posibles de la IA.
          */
         for (Movimiento movimiento : movimientos) {
 
             /*
-             * Creamos el estado que resultaría
-             * después de realizar este movimiento.
+             * Creamos el nuevo estado después
+             * de realizar la jugada.
              */
             EstadoJuego sucesor =
-                    estado.aplicarMovimiento(
-                            movimiento
-                    );
+                    estado.aplicarMovimiento(movimiento);
 
             /*
-             * Si con esta jugada ganamos directamente,
-             * es una jugada excelente.
+             * Si esta jugada hace que la IA gane
+             * inmediatamente, es la mejor posible.
              */
             if (sucesor.hayGanador(jugadorIA)) {
 
-                /*
-                 * Le damos el valor máximo.
-                 */
                 mejorValor = 100000;
 
-                /*
-                 * Guardamos esta jugada.
-                 */
                 mejorMovimiento = movimiento;
 
                 /*
-                 * No necesitamos seguir buscando:
-                 * ya encontramos una victoria inmediata.
+                 * No necesitamos revisar más jugadas.
                  */
                 break;
             }
 
             /*
-             * Si no ganamos inmediatamente,
-             * ahora simulamos la respuesta del oponente.
+             * Ahora comienza la parte MIN.
              *
-             * Aquí comienza el nivel MIN.
+             * Le pasamos PROFUNDIDAD - 1 porque
+             * ya utilizamos el primer nivel
+             * haciendo la jugada de MAX.
              */
             int valor =
                     minValor(
@@ -162,49 +168,41 @@ public class Minimax {
                     );
 
             /*
-             * MAX quiere quedarse con el valor más alto.
-             *
-             * Por eso comparamos el valor encontrado
-             * con el mejor que teníamos hasta ahora.
+             * MAX quiere el valor MÁS ALTO.
              */
             if (valor > mejorValor) {
 
-                /*
-                 * Guardamos el nuevo mejor valor.
-                 */
                 mejorValor = valor;
 
-                /*
-                 * Guardamos el movimiento que produjo
-                 * ese resultado.
-                 */
                 mejorMovimiento = movimiento;
             }
         }
 
         /*
-         * Finalmente devolvemos la jugada que MAX considera
-         * más conveniente.
+         * Devolvemos la mejor jugada encontrada.
          */
         return mejorMovimiento;
     }
 
+
     /**
-     * Esta función representa al jugador MIN.
+     * =========================================================
+     * FUNCIÓN MAX
+     * =========================================================
      *
-     * MIN intenta encontrar la respuesta que produzca
-     * el peor resultado posible para la IA.
+     * MAX representa a la IA.
      *
-     * Esto representa al oponente jugando de la mejor
-     * manera posible contra nosotros.
+     * Busca el valor MÁS GRANDE.
+     *
+     * Esta función se utiliza cuando le corresponde
+     * jugar a la IA dentro del árbol.
      */
-    private int minValor(
+    private int maxValor(
             EstadoJuego estado,
             int profundidad) {
 
         /*
-         * Si el estado ya terminó,
-         * simplemente lo evaluamos.
+         * Si el juego terminó, evaluamos el estado.
          */
         if (estado.esTerminal()) {
 
@@ -212,8 +210,8 @@ public class Minimax {
         }
 
         /*
-         * Si ya alcanzamos la profundidad definida,
-         * también dejamos de buscar y evaluamos.
+         * Si llegamos a profundidad 0,
+         * dejamos de explorar y usamos la heurística.
          */
         if (profundidad == 0) {
 
@@ -221,13 +219,105 @@ public class Minimax {
         }
 
         /*
-         * Obtenemos las respuestas posibles del oponente.
+         * Obtenemos los movimientos posibles de la IA.
          */
         List<Movimiento> movimientos =
                 estado.generarMovimientos();
 
         /*
-         * Si por alguna razón no existen movimientos,
+         * Si no hay movimientos,
+         * evaluamos el estado.
+         */
+        if (movimientos.isEmpty()) {
+
+            return heuristica.evaluar(estado);
+        }
+
+        /*
+         * MAX comienza con el valor más pequeño posible.
+         */
+        int mejorValor = Integer.MIN_VALUE;
+
+        /*
+         * Probamos cada movimiento posible.
+         */
+        for (Movimiento movimiento : movimientos) {
+
+            /*
+             * Creamos el estado después de la jugada.
+             */
+            EstadoJuego sucesor =
+                    estado.aplicarMovimiento(movimiento);
+
+            /*
+             * Llamamos a MIN.
+             *
+             * Reducimos la profundidad porque
+             * acabamos de explorar un nivel.
+             */
+            int valor =
+                    minValor(
+                            sucesor,
+                            profundidad - 1
+                    );
+
+            /*
+             * MAX se queda con el valor más grande.
+             */
+            if (valor > mejorValor) {
+
+                mejorValor = valor;
+            }
+        }
+
+        /*
+         * Devolvemos el mejor valor encontrado por MAX.
+         */
+        return mejorValor;
+    }
+
+
+    /**
+     * =========================================================
+     * FUNCIÓN MIN
+     * =========================================================
+     *
+     * MIN representa al oponente.
+     *
+     * Busca el valor MÁS PEQUEÑO,
+     * porque ese es el peor resultado para la IA.
+     */
+    private int minValor(
+            EstadoJuego estado,
+            int profundidad) {
+
+        /*
+         * Si el juego terminó,
+         * evaluamos el estado.
+         */
+        if (estado.esTerminal()) {
+
+            return heuristica.evaluar(estado);
+        }
+
+        /*
+         * Si llegamos a profundidad 0,
+         * dejamos de explorar.
+         */
+        if (profundidad == 0) {
+
+            return heuristica.evaluar(estado);
+        }
+
+        /*
+         * Obtenemos las respuestas posibles
+         * del jugador contrario.
+         */
+        List<Movimiento> movimientos =
+                estado.generarMovimientos();
+
+        /*
+         * Si no existen movimientos,
          * evaluamos el estado.
          */
         if (movimientos.isEmpty()) {
@@ -237,12 +327,8 @@ public class Minimax {
 
         /*
          * MIN comienza con el valor más grande posible.
-         *
-         * Esto permite que la primera respuesta encontrada
-         * sea menor y pueda convertirse en el nuevo mínimo.
          */
-        int peorValor =
-                Integer.MAX_VALUE;
+        int peorValor = Integer.MAX_VALUE;
 
         /*
          * Probamos todas las respuestas del oponente.
@@ -250,32 +336,26 @@ public class Minimax {
         for (Movimiento movimiento : movimientos) {
 
             /*
-             * Creamos el estado que resultaría
-             * después de la respuesta del oponente.
+             * Creamos el estado después
+             * de la respuesta del oponente.
              */
             EstadoJuego sucesor =
-                    estado.aplicarMovimiento(
-                            movimiento
-                    );
+                    estado.aplicarMovimiento(movimiento);
 
             /*
-             * Como estamos utilizando dos niveles:
+             * Ahora volvemos a MAX.
              *
-             * MAX -> movimiento de la IA
-             * MIN -> respuesta del oponente
-             *
-             * Después de MIN evaluamos directamente
-             * el estado.
+             * Esto es lo que permite aumentar
+             * la profundidad del árbol.
              */
             int valor =
-                    heuristica.evaluar(
-                            sucesor
+                    maxValor(
+                            sucesor,
+                            profundidad - 1
                     );
 
             /*
-             * MIN quiere el resultado más pequeño,
-             * porque representa la peor situación
-             * para la IA.
+             * MIN quiere el valor MÁS PEQUEÑO.
              */
             if (valor < peorValor) {
 
@@ -284,7 +364,7 @@ public class Minimax {
         }
 
         /*
-         * Devolvemos la peor respuesta que encontró MIN.
+         * Devolvemos la peor opción para la IA.
          */
         return peorValor;
     }
